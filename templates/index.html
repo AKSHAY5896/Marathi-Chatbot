@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>मराठी चॅटबॉट</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --saffron: #FF6B00;
+    --saffron-light: #FFF0E5;
+    --saffron-dark: #CC5200;
+    --teal: #00897B;
+    --teal-light: #E0F2F1;
+    --teal-dark: #00695C;
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --text: #1A1A1A;
+    --text-muted: #6B6B6B;
+    --border: #E5E0D8;
+    --intent-bg: #F0FBF9;
+    --intent-color: #00695C;
+    --mono: 'Space Mono', monospace;
+    --deva: 'Noto Sans Devanagari', sans-serif;
+  }
+
+  body {
+    font-family: var(--deva);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--saffron);
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-circle {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--saffron);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .header-title h1 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .header-title p {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid #C8E6C9;
+    background: #F1F8E9;
+    font-size: 11px;
+    color: #2E7D32;
+    font-family: var(--mono);
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #43A047;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── Layout ── */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    gap: 20px;
+    overflow: hidden;
+    height: calc(100vh - 64px);
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .sidebar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .sidebar-card h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    margin-bottom: 12px;
+  }
+
+  .nlp-pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .pipeline-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .step-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--saffron);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--mono);
+    flex-shrink: 0;
+  }
+
+  .step-label { font-size: 12px; color: var(--text-muted); }
+  .step-tech { font-size: 10px; color: var(--saffron-dark); font-family: var(--mono); margin-top: 1px; }
+
+  /* NLP stats */
+  .nlp-stats {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--intent-bg);
+    border: 1px solid #B2DFDB;
+    border-radius: 8px;
+  }
+
+  .nlp-stats.visible { display: block; }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    padding: 3px 0;
+    border-bottom: 1px solid #B2DFDB;
+  }
+
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { color: var(--text-muted); }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--teal-dark);
+  }
+
+  .confidence-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .confidence-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--teal);
+    transition: width 0.4s ease;
+  }
+
+  /* Quick prompts */
+  .quick-prompts {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .qp-btn {
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: var(--deva);
+    color: var(--text);
+    transition: all 0.15s;
+  }
+
+  .qp-btn:hover {
+    background: var(--saffron-light);
+    border-color: var(--saffron);
+    color: var(--saffron-dark);
+  }
+
+  /* ── Chat Area ── */
+  .chat-area {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* scrollbar */
+  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar-track { background: transparent; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Messages */
+  .msg-row { display: flex; gap: 10px; align-items: flex-end; }
+  .msg-row.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .bot-avatar-sm { background: var(--saffron); color: white; }
+  .user-avatar-sm { background: var(--teal); color: white; }
+
+  .bubble {
+    max-width: 70%;
+    padding: 11px 15px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    border-radius: 16px;
+  }
+
+  .bot-bubble {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px 16px 16px 16px;
+    color: var(--text);
+  }
+
+  .user-bubble {
+    background: var(--saffron);
+    color: white;
+    border-radius: 16px 4px 16px 16px;
+  }
+
+  /* Fallback / not-found error card */
+  .fallback-bubble {
+    max-width: 80%;
+    border-radius: 4px 16px 16px 16px;
+    border: 1.5px solid #FFCC80;
+    background: #FFF8F0;
+    overflow: hidden;
+  }
+  .fallback-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px 8px;
+    background: #FFF3E0;
+    border-bottom: 1px solid #FFCC80;
+  }
+  .fallback-icon { font-size: 16px; }
+  .fallback-title { font-size: 13px; font-weight: 600; color: #E65100; font-family: var(--deva); }
+  .fallback-body { padding: 10px 14px 12px; font-size: 13.5px; color: #4E342E; line-height: 1.6; }
+  .fallback-body p { margin-bottom: 6px; }
+  .fallback-topics { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .fallback-tag {
+    padding: 3px 10px; border-radius: 99px; background: #FFE0B2; color: #BF360C;
+    font-size: 11.5px; border: 1px solid #FFCC80; cursor: pointer;
+    font-family: var(--deva); transition: background 0.15s;
+  }
+  .fallback-tag:hover { background: #FF6B00; color: white; border-color: #FF6B00; }
+
+  /* Typing indicator */
+  .typing-dots span {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--saffron);
+    animation: bounce 1.2s infinite;
+    margin: 0 2px;
+  }
+
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+  /* ── Input ── */
+  .input-area {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: var(--surface);
+  }
+
+  #user-input {
+    flex: 1;
+    resize: none;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: var(--deva);
+    min-height: 42px;
+    max-height: 100px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  #user-input:focus { border-color: var(--saffron); }
+  #user-input::placeholder { color: #AAAAAA; }
+
+  #send-btn {
+    width: 42px; height: 42px;
+    border: none;
+    border-radius: 10px;
+    background: var(--saffron);
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
+
+  #send-btn:hover { background: var(--saffron-dark); }
+  #send-btn:active { transform: scale(0.95); }
+  #send-btn:disabled { background: var(--border); cursor: default; }
+
+  .input-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    padding: 0 16px 8px;
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-circle">म</div>
+    <div class="header-title">
+      <h1>मराठी चॅटबॉट</h1>
+      <p>तुमचे AI Assitance</p>
+    </div>
+  </div>
+  <div class="status-pill">
+    <div class="status-dot"></div>
+    <span>Online</span>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <div class="sidebar-card">
+      <h3>NLP Pipeline</h3>
+      <div class="nlp-pipeline">
+        <div class="pipeline-step">
+          <div class="step-num">१</div>
+          <div>
+            <div class="step-label">Text Cleaning</div>
+            <div class="step-tech">Regex · Normalization</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-num">२</div>
+          <div>
+            <div class="step-label">Tokenization</div>
+            <div class="step-tech">Devanagari Word Split</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-num">३</div>
+          <div>
+            <div class="step-label">TF-IDF Vectors</div>
+            <div class="step-tech">Char N-grams + Words</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-num">४</div>
+          <div>
+            <div class="step-label">Intent Match</div>
+            <div class="step-tech">Cosine Similarity</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-num">५</div>
+          <div>
+            <div class="step-label">Entity Extract</div>
+            <div class="step-tech">Cities · Numbers · Q-type</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live NLP stats -->
+      <div class="nlp-stats" id="nlp-stats">
+        <div class="stat-row">
+          <span class="stat-label">Intent</span>
+          <span class="stat-value" id="stat-intent">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Confidence</span>
+          <span class="stat-value" id="stat-conf">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Entities</span>
+          <span class="stat-value" id="stat-entities">—</span>
+        </div>
+        <div class="confidence-bar">
+          <div class="confidence-fill" id="conf-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <h3>Quick Prompts</h3>
+      <div class="quick-prompts">
+        <button class="qp-btn" onclick="sendQuick(this)">महाराष्ट्राबद्दल सांगा</button>
+        <button class="qp-btn" onclick="sendQuick(this)">शिवाजी महाराज कोण होते?</button>
+        <button class="qp-btn" onclick="sendQuick(this)">मराठी जेवण कोणते आहे?</button>
+        <button class="qp-btn" onclick="sendQuick(this)">एक विनोद सांगा</button>
+        <button class="qp-btn" onclick="sendQuick(this)">मराठी कविता सांगा</button>
+        <button class="qp-btn" onclick="sendQuick(this)">गणेश चतुर्थी बद्दल सांगा</button>
+        <button class="qp-btn" onclick="sendQuick(this)">पायथन बद्दल सांगा</button>
+        <button class="qp-btn" onclick="sendQuick(this)">क्रिकेट बद्दल सांगा</button>
+        <button class="qp-btn" onclick="sendQuick(this)">मदत</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Chat Area -->
+  <div class="chat-area">
+    <div id="messages">
+      <div class="msg-row bot">
+        <div class="msg-avatar bot-avatar-sm">म</div>
+        <div class="bubble bot-bubble">
+          नमस्कार! मी मराठी NLP चॅटबॉट आहे. मी TF-IDF आणि Cosine Similarity वापरून तुमचे प्रश्न समजतो.<br><br>
+          बाजूला असलेले Quick Prompts वापरा किंवा इथे मराठीत टाइप करा! 😊
+        </div>
+      </div>
+    </div>
+    <p class="input-hint">Enter ↵ पाठवा · Shift+Enter नवीन ओळ</p>
+    <div class="input-area">
+      <textarea id="user-input" placeholder="मराठीत टाइप करा..." rows="1"></textarea>
+      <button id="send-btn" onclick="sendMessage()" title="पाठवा">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+let isLoading = false;
+
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px';
+});
+
+function sendQuick(btn) {
+  inputEl.value = btn.textContent.trim();
+  sendMessage();
+}
+
+function addMsg(role, text) {
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + (role === 'user' ? 'user' : 'bot');
+
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar ' + (role === 'user' ? 'user-avatar-sm' : 'bot-avatar-sm');
+  avatar.textContent = role === 'user' ? 'तु' : 'म';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + (role === 'user' ? 'user-bubble' : 'bot-bubble');
+  bubble.innerHTML = text.replace(/\n/g, '<br>');
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.id = 'typing-row';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar bot-avatar-sm';
+  avatar.textContent = 'म';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble bot-bubble typing-dots';
+  bubble.innerHTML = '<span></span><span></span><span></span>';
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-row');
+  if (el) el.remove();
+}
+
+function updateNLPStats(intent, confidence, entities) {
+  document.getElementById('nlp-stats').classList.add('visible');
+  document.getElementById('stat-intent').textContent = intent;
+  document.getElementById('stat-conf').textContent = confidence + '%';
+
+  const bar = document.getElementById('conf-bar');
+  bar.style.width = confidence + '%';
+  bar.style.background = confidence > 60 ? '#00897B' : confidence > 35 ? '#FF6B00' : '#E53935';
+
+  const ents = [];
+  if (entities.cities && entities.cities.length) ents.push(entities.cities.join(', '));
+  if (entities.question_type) ents.push(entities.question_type);
+  document.getElementById('stat-entities').textContent = ents.length ? ents.join(' · ') : 'none';
+}
+
+
+const AVAILABLE_TOPICS = [
+  'नमस्कार', 'शिवाजी महाराज', 'महाराष्ट्र', 'मराठी जेवण',
+  'मराठी सण', 'Python', 'Cricket', 'मराठी कविता',
+  'विनोद', 'मराठी भाषा', 'इतिहास', 'मदत'
+];
+
+function addFallbackMsg(userInput) {
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar bot-avatar-sm';
+  avatar.textContent = 'म';
+
+  const card = document.createElement('div');
+  card.className = 'fallback-bubble';
+
+  const header = document.createElement('div');
+  header.className = 'fallback-header';
+  header.innerHTML = '<span class="fallback-icon">⚠️</span><span class="fallback-title">हे मला माहीत नाही!</span>';
+
+  const body = document.createElement('div');
+  body.className = 'fallback-body';
+  body.innerHTML = `<p>माफ करा, <strong>"${userInput}"</strong> बद्दल माझ्याकडे माहिती नाही.</p>
+    <p style="color:#6B6B6B; font-size:12.5px;">मी फक्त या topics वर बोलू शकतो:</p>
+    <div class="fallback-topics">
+      ${AVAILABLE_TOPICS.map(t => `<button class="fallback-tag" onclick="useTopicSuggestion('${t}')">${t}</button>`).join('')}
+    </div>`;
+
+  card.appendChild(header);
+  card.appendChild(body);
+  row.appendChild(avatar);
+  row.appendChild(card);
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function useTopicSuggestion(topic) {
+  inputEl.value = topic + ' बद्दल सांगा';
+  inputEl.focus();
+}
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text || isLoading) return;
+
+  isLoading = true;
+  sendBtn.disabled = true;
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
+
+  addMsg('user', text);
+  showTyping();
+
+  try {
+    const res = await fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+    const data = await res.json();
+    removeTyping();
+    if (data.is_fallback) {
+      addFallbackMsg(text);
+    } else {
+      addMsg('bot', data.response);
+    }
+    updateNLPStats(data.intent, data.confidence, data.entities);
+  } catch(e) {
+    removeTyping();
+    addMsg('bot', 'माफ करा, server शी connection नाही. Flask app चालू आहे का?');
+  }
+
+  isLoading = false;
+  sendBtn.disabled = false;
+  inputEl.focus();
+}
+</script>
+</body>
+</html>
